@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>VisionGoal - ビジョンボード＆目標達成 | selfup.net</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;800&family=Noto+Sans+JP:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; }
+    .font-mono-num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs flex-none">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="../" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Apps Hub</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-500/20">
+            <i class="fa-solid fa-compass"></i>
+          </div>
+          <span class="text-base font-bold text-slate-900 hidden sm:inline">VisionGoal</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btnOpenReview" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-clipboard-check text-amber-600"></i>
+          <span class="hidden sm:inline">ストック・棚卸し</span>
+          <span id="reviewAlertDot" class="hidden w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+        </button>
+        <button id="btnFocusMode" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-expand"></i>
+          <span class="hidden sm:inline">集中モード</span>
+        </button>
+        <button id="btnExportPng" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-image"></i>
+          <span class="hidden sm:inline">壁紙出力</span>
+        </button>
+        <button id="btnBackup" class="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition" title="データ管理">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 集中枠 タブバー（最大10個） -->
+    <div class="bg-slate-50 border-t border-slate-200 px-4 py-2">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 shrink-0">
+            <span>集中枠</span>
+            <span id="activeCountBadge" class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 text-[11px] font-mono-num">0 / 10</span>
+          </div>
+          <div id="goalTabsContainer" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-1"></div>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-slate-200">
+          <button id="btnAddGoal" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>追加</span>
+          </button>
+          <button id="btnArchiveGoal" class="p-1.5 rounded-xl bg-white hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200 hover:border-amber-300 transition shadow-xs" title="目標を温存（ストックへ退避）">
+            <i class="fa-solid fa-box-archive text-xs"></i>
+          </button>
+          <button id="btnDeleteGoal" class="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-300 transition shadow-xs" title="現在の目標を削除">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- 左カラム：強烈な1枚（ビジュアルアンカー） -->
+    <section class="lg:col-span-6 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-eye text-amber-500"></i> 強烈な1枚（ビジュアルアンカー）
+        </h2>
+        <div class="flex items-center gap-1.5">
+          <button id="btnFitToggle" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-crop-simple mr-1"></i><span id="fitLabel">トリミング</span>
+          </button>
+          <button id="btnRemovePhoto" class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition">
+            <i class="fa-solid fa-trash-can mr-1"></i>写真解除
+          </button>
+        </div>
+      </div>
+
+      <div id="photoDropArea" class="relative group aspect-4/3 sm:aspect-16/10 w-full rounded-2xl border-2 border-dashed border-slate-300 bg-slate-100/70 overflow-hidden flex flex-col items-center justify-center cursor-pointer transition hover:border-indigo-400 hover:bg-indigo-50/20 shadow-xs">
+        <img id="goalImage" src="" alt="Vision Anchor" class="hidden w-full h-full object-cover transition duration-300">
+
+        <div id="photoPlaceholder" class="p-6 text-center flex flex-col items-center gap-3">
+          <div class="w-14 h-14 rounded-2xl bg-white text-indigo-500 flex items-center justify-center shadow-md text-2xl group-hover:scale-105 transition">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-700">心を奮い立たせる【最強の1枚】をセット</p>
+            <p class="text-xs text-slate-400 mt-1">ドラッグ＆ドロップまたはクリック ｜ 完全ローカル保存</p>
+          </div>
+        </div>
+
+        <div id="photoOverlay" class="hidden absolute inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+          <span class="px-4 py-2 rounded-xl bg-white/90 text-slate-800 text-xs font-bold shadow-lg flex items-center gap-2">
+            <i class="fa-solid fa-camera"></i> 写真を差し替える
+          </span>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" class="hidden">
+      </div>
+      <p class="text-[11px] text-slate-400 text-center">※画像はIndexedDBに端末内保存され、外部通信は一切行いません</p>
+    </section>
+
+    <!-- 右カラム：目標・論理領域（Goal & Ideas） -->
+    <section class="lg:col-span-6 flex flex-col gap-5 bg-white p-5 sm:p-7 rounded-2xl border border-slate-200 shadow-sm">
+      
+      <!-- メイン目標 -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-trophy text-amber-500"></i> メイン目標 (Big Vision)
+        </label>
+        <input id="goalTitleInput" type="text" class="w-full text-xl sm:text-2xl font-black text-slate-900 border-b-2 border-transparent hover:border-slate-200 focus:border-indigo-600 focus:outline-none transition py-1 bg-transparent" placeholder="一番叶えたい目標を入力...">
+      </div>
+
+      <!-- 達成期日 & カウントダウン -->
+      <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl shadow-md">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold text-indigo-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-hourglass-half text-amber-400"></i> 達成期日
+          </span>
+          <input id="goalDateInput" type="date" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white rounded-lg px-2.5 py-1 border border-white/20 focus:outline-none focus:border-indigo-400 transition cursor-pointer">
+        </div>
+
+        <div id="countdownBox" class="flex items-baseline justify-between text-center gap-2 pt-1">
+          <div class="flex-1 bg-white/5 rounded-xl p-2 border border-white/10">
+            <span id="cdDays" class="block text-2xl sm:text-3xl font-extrabold font-mono-num text-amber-400">0</span>
+            <span class="text-[10px] uppercase font-bold text-slate-300">Days</span>
+          </div>
+          <div class="flex-1 bg-white/5 rounded-xl p-2 border border-white/10">
+            <span id="cdHours" class="block text-2xl sm:text-3xl font-extrabold font-mono-num text-white">00</span>
+            <span class="text-[10px] uppercase font-bold text-slate-300">Hours</span>
+          </div>
+          <div class="flex-1 bg-white/5 rounded-xl p-2 border border-white/10">
+            <span id="cdMins" class="block text-2xl sm:text-3xl font-extrabold font-mono-num text-white">00</span>
+            <span class="text-[10px] uppercase font-bold text-slate-300">Mins</span>
+          </div>
+          <div class="flex-1 bg-white/5 rounded-xl p-2 border border-white/10">
+            <span id="cdSecs" class="block text-2xl sm:text-3xl font-extrabold font-mono-num text-indigo-300">00</span>
+            <span class="text-[10px] uppercase font-bold text-slate-300">Secs</span>
+          </div>
+        </div>
+        <div id="cdCompletedBadge" class="hidden text-center py-2 font-bold text-amber-300 text-sm">
+          🎉 目標期日を達成しました！素晴らしい前進です！
+        </div>
+      </div>
+
+      <!-- なぜ叶えたいのか（動機） -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-heart text-rose-500"></i> なぜ叶えたいのか (Why & Motivation)
+        </label>
+        <textarea id="goalWhyInput" rows="3" class="w-full text-xs font-medium text-slate-700 p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-indigo-500 transition resize-none" placeholder="この目標を達成したい理由、手に入れたときの感情を自由に書き出してください..."></textarea>
+      </div>
+
+      <!-- 実現のためにできること・アイデア -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> 実現のためにできること・アイデア (Ideas & Perspectives)
+          </label>
+          <span id="ideasCount" class="text-[11px] font-bold text-slate-400">0 個</span>
+        </div>
+
+        <div id="ideasList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+
+        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+          <input id="newIdeaInput" type="text" class="flex-1 text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-indigo-500 transition" placeholder="試してみたいこと・着眼点を自由に追加 (Enterで追加)...">
+          <button id="btnAddIdea" class="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition shrink-0 shadow-xs flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> 追加
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ストック＆定期棚卸し モーダル (z-50) -->
+  <div id="reviewModal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check text-amber-500"></i> 目標ストック ＆ 定期棚卸し
+          </h3>
+          <p id="reviewStatusText" class="text-xs text-slate-500 mt-0.5">前回見直しから 0日 経過</p>
+        </div>
+        <button id="btnCloseReview" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto flex-1 space-y-4">
+        <div class="flex gap-2">
+          <input id="newStockTitle" type="text" class="flex-1 text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-indigo-500" placeholder="いつか叶えたい目標・アイデアをストック...">
+          <button id="btnAddStock" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shrink-0">
+            ストック追加
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">温存中のストック目標一覧</h4>
+          <div id="backlogList" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <span class="text-[11px] text-slate-500">月1回の見直しで優先度を整理しましょう</span>
+        <button id="btnCompleteReview" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition">
+          ✓ 棚卸しを完了する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全画面集中モード モーダル (z-50) -->
+  <div id="focusModal" class="hidden fixed inset-0 z-50 bg-black/95 text-white flex flex-col justify-between p-6 sm:p-10 backdrop-blur-md">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-bold text-slate-400 tracking-widest uppercase">Focus & Alignment Mode</span>
+      <button id="btnCloseFocus" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <div class="max-w-4xl w-full mx-auto my-auto flex flex-col items-center text-center gap-6">
+      <div id="focusImageBox" class="w-full max-w-xl aspect-16/10 rounded-3xl overflow-hidden shadow-2xl border border-white/20">
+        <img id="focusImage" src="" alt="Vision" class="w-full h-full object-cover">
+      </div>
+      <div>
+        <h1 id="focusTitle" class="text-2xl sm:text-4xl font-black tracking-tight text-white mb-2"></h1>
+        <p id="focusWhy" class="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed"></p>
+      </div>
+      <div id="focusCountdown" class="text-amber-400 font-mono-num text-lg sm:text-xl font-bold tracking-wider"></div>
+    </div>
+
+    <div class="text-center text-xs text-slate-500">
+      Escキー または 右上の ✕ で終了
+    </div>
+  </div>
+
+  <!-- データ管理モーダル (z-50) -->
+  <div id="backupModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-gear text-indigo-600"></i> データ管理・バックアップ
+        </h3>
+        <button id="btnCloseBackup" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        すべての目標設定をJSON形式でダウンロード・復元できます（画像はIndexedDBに端末内保存されています）。
+      </p>
+      <div class="space-y-2 pt-2">
+        <button id="btnExportJson" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> JSONバックアップを保存
+        </button>
+        <button id="btnImportJsonTrigger" class="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-upload"></i> JSONバックアップから復元
+        </button>
+        <input type="file" id="jsonFileInput" accept=".json,application/json" class="hidden">
+      </div>
+    </div>
+  </div>
+
+  <!-- ★汎用カスタムダイアログ（最前面 z-[70] に設定して裏隠れを完全防止）★ -->
+  <div id="customModal" class="hidden fixed inset-0 z-[70] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+      <h3 id="customModalTitle" class="text-sm font-bold text-slate-900"></h3>
+      <p id="customModalMessage" class="text-xs text-slate-600 leading-relaxed"></p>
+      <input id="customModalInput" type="text" class="hidden w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-indigo-500">
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="customModalCancel" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition">キャンセル</button>
+        <button id="customModalOk" class="px-4 py-2 text-xs font-bold rounded-xl transition"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- フッター -->
+  <footer class="mt-12 py-6 text-center border-t border-slate-200 flex-none">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const STORAGE_KEY = 'selfup_visiongoal_v3';
+    const DB_NAME = 'VisionGoalDB';
+    const DB_STORE = 'photos';
+    const MAX_ACTIVE_GOALS = 10;
+
+    const $ = id => document.getElementById(id);
+
+    const createNewGoalTemplate = (title = '新しい目標', status = 'active') => {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 1);
+      return {
+        id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        status: status,
+        title: title,
+        deadline: d.toISOString().split('T')[0],
+        why: '',
+        fitMode: 'cover',
+        ideas: [
+          '関連する本や体験に触れてみる',
+          'まずは10分だけ試してみる'
+        ]
+      };
+    };
+
+    let appData = {
+      activeGoalId: null,
+      lastReviewedAt: new Date().toISOString().split('T')[0],
+      goals: []
+    };
+
+    let db = null;
+    let currentPhotoBlobUrl = null;
+
+    // --- 最前面カスタムダイアログ ---
+    function showModalPrompt(title, defaultValue = '') {
+      return new Promise(resolve => {
+        $('customModalTitle').innerText = title;
+        $('customModalMessage').innerText = '';
+        $('customModalMessage').classList.add('hidden');
+        const input = $('customModalInput');
+        input.value = defaultValue;
+        input.classList.remove('hidden');
+        
+        const okBtn = $('customModalOk');
+        okBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition bg-indigo-600 hover:bg-indigo-700 text-white';
+        okBtn.innerText = '決定';
+
+        const modal = $('customModal');
+        modal.classList.remove('hidden');
+        input.focus();
+
+        const cleanup = (val) => {
+          modal.classList.add('hidden');
+          okBtn.onclick = null;
+          $('customModalCancel').onclick = null;
+          resolve(val);
+        };
+
+        okBtn.onclick = () => cleanup(input.value.trim());
+        $('customModalCancel').onclick = () => cleanup(null);
+      });
+    }
+
+    function showModalConfirm(title, message, isDanger = false) {
+      return new Promise(resolve => {
+        $('customModalTitle').innerText = title;
+        $('customModalMessage').innerText = message;
+        $('customModalMessage').classList.remove('hidden');
+        $('customModalInput').classList.add('hidden');
+
+        const okBtn = $('customModalOk');
+        okBtn.className = `px-4 py-2 text-xs font-bold rounded-xl transition text-white ${
+          isDanger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-indigo-600 hover:bg-indigo-700'
+        }`;
+        okBtn.innerText = isDanger ? '削除する' : '実行する';
+
+        const modal = $('customModal');
+        modal.classList.remove('hidden');
+
+        const cleanup = (val) => {
+          modal.classList.add('hidden');
+          okBtn.onclick = null;
+          $('customModalCancel').onclick = null;
+          resolve(val);
+        };
+
+        okBtn.onclick = () => cleanup(true);
+        $('customModalCancel').onclick = () => cleanup(false);
+      });
+    }
+
+    function showModalAlert(title, message) {
+      return new Promise(resolve => {
+        $('customModalTitle').innerText = title;
+        $('customModalMessage').innerText = message;
+        $('customModalMessage').classList.remove('hidden');
+        $('customModalInput').classList.add('hidden');
+
+        const okBtn = $('customModalOk');
+        okBtn.className = 'px-4 py-2 text-xs font-bold rounded-xl transition bg-slate-900 text-white hover:bg-slate-800';
+        okBtn.innerText = 'OK';
+        $('customModalCancel').classList.add('hidden');
+
+        const modal = $('customModal');
+        modal.classList.remove('hidden');
+
+        okBtn.onclick = () => {
+          modal.classList.add('hidden');
+          $('customModalCancel').classList.remove('hidden');
+          okBtn.onclick = null;
+          resolve();
+        };
+      });
+    }
+
+    // --- IndexedDB ---
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains(DB_STORE)) {
+            d.createObjectStore(DB_STORE, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = e => {
+          db = e.target.result;
+          resolve(db);
+        };
+        req.onerror = e => reject(e);
+      });
+    }
+
+    function savePhotoToDB(goalId, blob) {
+      return new Promise((resolve, reject) => {
+        if (!db) return reject('No DB');
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        const store = tx.objectStore(DB_STORE);
+        store.put({ id: `photo_${goalId}`, blob, updatedAt: Date.now() });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function getPhotoFromDB(goalId) {
+      return new Promise((resolve) => {
+        if (!db) return resolve(null);
+        const tx = db.transaction(DB_STORE, 'readonly');
+        const store = tx.objectStore(DB_STORE);
+        const req = store.get(`photo_${goalId}`);
+        req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    function deletePhotoFromDB(goalId) {
+      return new Promise(resolve => {
+        if (!db) return resolve();
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        const store = tx.objectStore(DB_STORE);
+        store.delete(`photo_${goalId}`);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+
+    // --- 保存 & 読込 ---
+    function saveAppData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      } catch (e) {
+        console.error('Save error:', e);
+      }
+    }
+
+    function loadAppData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) appData = JSON.parse(raw);
+      } catch (e) {}
+
+      if (!appData.goals || !appData.goals.length) {
+        const initGoal = createNewGoalTemplate('年内に独立して理想の生活を手に入れる', 'active');
+        appData.goals = [initGoal];
+        appData.activeGoalId = initGoal.id;
+        appData.lastReviewedAt = new Date().toISOString().split('T')[0];
+        saveAppData();
+      }
+
+      appData.goals.forEach(g => {
+        if (!Array.isArray(g.ideas)) {
+          g.ideas = (g.tasks && g.tasks.length) 
+            ? g.tasks.map(t => typeof t === 'string' ? t : t.text) 
+            : ['関連する本や体験に触れてみる', 'まずは10分だけ試してみる'];
+        }
+      });
+
+      const activeGoals = getActiveGoals();
+      if (!activeGoals.some(g => g.id === appData.activeGoalId)) {
+        appData.activeGoalId = activeGoals[0]?.id || null;
+      }
+    }
+
+    function getActiveGoals() {
+      return appData.goals.filter(g => g.status === 'active');
+    }
+
+    function getBacklogGoals() {
+      return appData.goals.filter(g => g.status === 'backlog');
+    }
+
+    function getActiveGoal() {
+      return appData.goals.find(g => g.id === appData.activeGoalId) || getActiveGoals()[0];
+    }
+
+    // --- UI 描画 ---
+    function renderTabs() {
+      const container = $('goalTabsContainer');
+      container.innerHTML = '';
+
+      const activeList = getActiveGoals();
+      $('activeCountBadge').innerText = `${activeList.length} / ${MAX_ACTIVE_GOALS}`;
+
+      activeList.forEach(goal => {
+        const isActive = goal.id === appData.activeGoalId;
+        const btn = document.createElement('button');
+        btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 max-w-[180px] truncate ${
+          isActive 
+            ? 'bg-slate-900 text-white shadow-xs' 
+            : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
+        }`;
+        btn.innerHTML = `<i class="fa-solid fa-flag text-[10px] ${isActive ? 'text-amber-400' : 'text-slate-400'}"></i><span class="truncate">${escapeHtml(goal.title || '目標')}</span>`;
+        btn.onclick = () => switchGoal(goal.id);
+        container.appendChild(btn);
+      });
+
+      checkReviewStatus();
+    }
+
+    async function renderActiveGoal() {
+      const g = getActiveGoal();
+      if (!g) return;
+
+      $('goalTitleInput').value = g.title || '';
+      $('goalDateInput').value = g.deadline || '';
+      $('goalWhyInput').value = g.why || '';
+
+      updateFitModeUI(g.fitMode || 'cover');
+      renderIdeasList();
+      updateCountdown();
+
+      if (currentPhotoBlobUrl) {
+        URL.revokeObjectURL(currentPhotoBlobUrl);
+        currentPhotoBlobUrl = null;
+      }
+
+      const imgEl = $('goalImage');
+      const placeholder = $('photoPlaceholder');
+      const overlay = $('photoOverlay');
+
+      const blob = await getPhotoFromDB(g.id);
+      if (blob) {
+        currentPhotoBlobUrl = URL.createObjectURL(blob);
+        imgEl.src = currentPhotoBlobUrl;
+        imgEl.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        overlay.classList.remove('hidden');
+      } else {
+        imgEl.src = '';
+        imgEl.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    function renderIdeasList() {
+      const g = getActiveGoal();
+      const listEl = $('ideasList');
+      listEl.innerHTML = '';
+      if (!Array.isArray(g.ideas)) g.ideas = [];
+
+      g.ideas.forEach((ideaText, idx) => {
+        const item = document.createElement('div');
+        item.className = 'group flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 hover:bg-amber-100/60 transition shadow-2xs';
+        item.innerHTML = `
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="text-amber-500 text-xs shrink-0"><i class="fa-solid fa-sparkles"></i></span>
+            <span class="text-xs font-bold text-amber-950 truncate">${escapeHtml(ideaText)}</span>
+          </div>
+          <button class="opacity-0 group-hover:opacity-100 text-amber-800/40 hover:text-rose-600 p-1 text-xs transition" title="手放す">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        `;
+
+        item.querySelector('button').onclick = (e) => {
+          e.stopPropagation();
+          g.ideas.splice(idx, 1);
+          saveAppData();
+          renderIdeasList();
+        };
+
+        listEl.appendChild(item);
+      });
+
+      $('ideasCount').innerText = `${g.ideas.length} 個`;
+    }
+
+    function updateFitModeUI(mode) {
+      const img = $('goalImage');
+      if (mode === 'contain') {
+        img.className = 'w-full h-full object-contain bg-slate-900 transition duration-300';
+        $('fitLabel').innerText = '全体表示';
+      } else {
+        img.className = 'w-full h-full object-cover transition duration-300';
+        $('fitLabel').innerText = 'トリミング';
+      }
+    }
+
+    function updateCountdown() {
+      const g = getActiveGoal();
+      if (!g || !g.deadline) return;
+
+      const targetDate = new Date(g.deadline + 'T23:59:59');
+      const now = new Date();
+      const diff = targetDate - now;
+
+      const box = $('countdownBox');
+      const badge = $('cdCompletedBadge');
+
+      if (diff <= 0) {
+        box.classList.add('hidden');
+        badge.classList.remove('hidden');
+        return;
+      }
+
+      box.classList.remove('hidden');
+      badge.classList.add('hidden');
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const mins = Math.floor((diff / 1000 / 60) % 60);
+      const secs = Math.floor((diff / 1000) % 60);
+
+      $('cdDays').innerText = days;
+      $('cdHours').innerText = String(hours).padStart(2, '0');
+      $('cdMins').innerText = String(mins).padStart(2, '0');
+      $('cdSecs').innerText = String(secs).padStart(2, '0');
+
+      if (!$('focusModal').classList.contains('hidden')) {
+        $('focusCountdown').innerText = `目標達成まで あと ${days}日 ${hours}時間 ${mins}分 ${secs}秒`;
+      }
+    }
+
+    setInterval(updateCountdown, 1000);
+
+    // --- 操作ロジック ---
+    function switchGoal(goalId) {
+      if (appData.activeGoalId === goalId) return;
+      appData.activeGoalId = goalId;
+      saveAppData();
+      renderTabs();
+      renderActiveGoal();
+    }
+
+    async function addNewGoal() {
+      const activeCount = getActiveGoals().length;
+      if (activeCount >= MAX_ACTIVE_GOALS) {
+        await showModalAlert('上限到達', `同時に進行できる目標は最大${MAX_ACTIVE_GOALS}個までです。\nストックから入れ替えるか、1つ温存してください。`);
+        return;
+      }
+
+      const title = await showModalPrompt('新しい目標のタイトルを入力してください:', '新しい目標');
+      if (!title) return;
+
+      const newGoal = createNewGoalTemplate(title, 'active');
+      appData.goals.push(newGoal);
+      appData.activeGoalId = newGoal.id;
+      saveAppData();
+      renderTabs();
+      renderActiveGoal();
+    }
+
+    async function archiveCurrentGoal() {
+      const activeList = getActiveGoals();
+      if (activeList.length <= 1) {
+        await showModalAlert('操作できません', '集中枠の目標は最低1つ必要です。');
+        return;
+      }
+
+      const g = getActiveGoal();
+      const ok = await showModalConfirm('目標の温存', `「${g.title}」をストック（温存）へ退避しますか？\n（写真やアイデアは保持され、棚卸し画面からいつでも復帰できます）`);
+      if (!ok) return;
+
+      g.status = 'backlog';
+      const remaining = getActiveGoals();
+      appData.activeGoalId = remaining[0].id;
+
+      saveAppData();
+      renderTabs();
+      renderActiveGoal();
+    }
+
+    async function deleteCurrentGoal() {
+      const activeList = getActiveGoals();
+      if (activeList.length <= 1) {
+        await showModalAlert('操作できません', '目標は最低1つ登録しておく必要があります。');
+        return;
+      }
+
+      const g = getActiveGoal();
+      const ok = await showModalConfirm('目標の完全削除', `「${g.title}」を完全に削除しますか？\n（画像や着眼点カードもすべて削除されます）`, true);
+      if (!ok) return;
+
+      const targetId = g.id;
+      await deletePhotoFromDB(targetId);
+
+      appData.goals = appData.goals.filter(item => item.id !== targetId);
+      const remaining = getActiveGoals();
+      appData.activeGoalId = remaining[0].id;
+
+      saveAppData();
+      renderTabs();
+      renderActiveGoal();
+    }
+
+    // --- バックログ棚卸し画面の描画（ボタン反応を確文化） ---
+    function checkReviewStatus() {
+      const last = new Date(appData.lastReviewedAt || Date.now());
+      const now = new Date();
+      const days = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+      
+      $('reviewStatusText').innerText = `前回見直しから ${days}日 経過`;
+      if (days >= 30) {
+        $('reviewAlertDot').classList.remove('hidden');
+      } else {
+        $('reviewAlertDot').classList.add('hidden');
+      }
+    }
+
+    function renderBacklog() {
+      const listEl = $('backlogList');
+      listEl.innerHTML = '';
+      const list = getBacklogGoals();
+
+      if (!list.length) {
+        listEl.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">温存中のストック目標はありません。</p>';
+        return;
+      }
+
+      list.forEach(goal => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50 gap-2';
+        item.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-bold text-slate-800 truncate">${escapeHtml(goal.title)}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">期日: ${goal.deadline || '未定'}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button class="btn-promote px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition flex items-center gap-1">
+              <i class="fa-solid fa-arrow-up text-[10px]"></i><span>集中枠へ</span>
+            </button>
+            <button class="btn-delete p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg text-xs transition" title="削除">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        `;
+
+        // 「集中枠へ」昇格ボタン
+        item.querySelector('.btn-promote').onclick = async (e) => {
+          e.stopPropagation();
+          if (getActiveGoals().length >= MAX_ACTIVE_GOALS) {
+            await showModalAlert('集中枠が満杯です', `集中枠は最大${MAX_ACTIVE_GOALS}個です。\n集中枠の目標を1つ温存してから昇格させてください。`);
+            return;
+          }
+          goal.status = 'active';
+          appData.activeGoalId = goal.id;
+          saveAppData();
+          renderTabs();
+          renderActiveGoal();
+          renderBacklog();
+        };
+
+        // 「ゴミ箱」削除ボタン
+        item.querySelector('.btn-delete').onclick = async (e) => {
+          e.stopPropagation();
+          const ok = await showModalConfirm('ストック削除', `ストック目標「${goal.title}」を削除しますか？`, true);
+          if (!ok) return;
+
+          await deletePhotoFromDB(goal.id);
+          appData.goals = appData.goals.filter(item => item.id !== goal.id);
+          saveAppData();
+          renderBacklog();
+        };
+
+        listEl.appendChild(item);
+      });
+    }
+
+    // --- イベントバインド ---
+    $('btnAddGoal').onclick = addNewGoal;
+    $('btnArchiveGoal').onclick = archiveCurrentGoal;
+    $('btnDeleteGoal').onclick = deleteCurrentGoal;
+
+    $('goalTitleInput').addEventListener('input', e => {
+      const g = getActiveGoal();
+      g.title = e.target.value;
+      saveAppData();
+      renderTabs();
+    });
+
+    $('goalDateInput').addEventListener('change', e => {
+      const g = getActiveGoal();
+      g.deadline = e.target.value;
+      saveAppData();
+      updateCountdown();
+    });
+
+    $('goalWhyInput').addEventListener('input', e => {
+      const g = getActiveGoal();
+      g.why = e.target.value;
+      saveAppData();
+    });
+
+    $('btnFitToggle').onclick = () => {
+      const g = getActiveGoal();
+      g.fitMode = g.fitMode === 'contain' ? 'cover' : 'contain';
+      saveAppData();
+      updateFitModeUI(g.fitMode);
+    };
+
+    $('btnRemovePhoto').onclick = async () => {
+      const g = getActiveGoal();
+      await deletePhotoFromDB(g.id);
+      renderActiveGoal();
+    };
+
+    // 写真アップロード
+    function processAndSaveImage(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        showModalAlert('エラー', '画像ファイルを選択してください。');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = async () => {
+          const maxDim = 1600;
+          let w = img.width;
+          let h = img.height;
+
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          canvas.toBlob(async blob => {
+            if (!blob) return;
+            const g = getActiveGoal();
+            await savePhotoToDB(g.id, blob);
+            renderActiveGoal();
+          }, 'image/jpeg', 0.88);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    const dropArea = $('photoDropArea');
+    dropArea.onclick = () => $('fileInput').click();
+    $('fileInput').onchange = e => {
+      if (e.target.files && e.target.files[0]) processAndSaveImage(e.target.files[0]);
+      e.target.value = '';
+    };
+    dropArea.ondragover = e => { e.preventDefault(); dropArea.classList.add('border-indigo-500', 'bg-indigo-50/40'); };
+    dropArea.ondragleave = () => dropArea.classList.remove('border-indigo-500', 'bg-indigo-50/40');
+    dropArea.ondrop = e => {
+      e.preventDefault();
+      dropArea.classList.remove('border-indigo-500', 'bg-indigo-50/40');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) processAndSaveImage(e.dataTransfer.files[0]);
+    };
+
+    // アイデアカード追加
+    const addIdea = () => {
+      const val = $('newIdeaInput').value.trim();
+      if (!val) return;
+      const g = getActiveGoal();
+      if (!Array.isArray(g.ideas)) g.ideas = [];
+      g.ideas.push(val);
+      $('newIdeaInput').value = '';
+      saveAppData();
+      renderIdeasList();
+    };
+    $('btnAddIdea').onclick = addIdea;
+    $('newIdeaInput').onkeydown = e => { if (e.key === 'Enter') addIdea(); };
+
+    // ストック見直しモーダル
+    $('btnOpenReview').onclick = () => {
+      renderBacklog();
+      $('reviewModal').classList.remove('hidden');
+    };
+    $('btnCloseReview').onclick = () => $('reviewModal').classList.add('hidden');
+    $('btnAddStock').onclick = () => {
+      const val = $('newStockTitle').value.trim();
+      if (!val) return;
+      const newStock = createNewGoalTemplate(val, 'backlog');
+      appData.goals.push(newStock);
+      $('newStockTitle').value = '';
+      saveAppData();
+      renderBacklog();
+    };
+    $('btnCompleteReview').onclick = async () => {
+      appData.lastReviewedAt = new Date().toISOString().split('T')[0];
+      saveAppData();
+      checkReviewStatus();
+      $('reviewModal').classList.add('hidden');
+      await showModalAlert('完了', '定期棚卸しを記録しました！');
+    };
+
+    // フォーカスモード
+    $('btnFocusMode').onclick = () => {
+      const g = getActiveGoal();
+      $('focusTitle').innerText = g.title || '目標';
+      $('focusWhy').innerText = g.why || '';
+      const img = $('goalImage');
+      if (!img.classList.contains('hidden') && img.src) {
+        $('focusImage').src = img.src;
+        $('focusImageBox').classList.remove('hidden');
+      } else {
+        $('focusImageBox').classList.add('hidden');
+      }
+      $('focusModal').classList.remove('hidden');
+      updateCountdown();
+    };
+    $('btnCloseFocus').onclick = () => $('focusModal').classList.add('hidden');
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        $('focusModal').classList.add('hidden');
+        $('backupModal').classList.add('hidden');
+        $('reviewModal').classList.add('hidden');
+        $('customModal').classList.add('hidden');
+      }
+    });
+
+    // 壁紙出力 (PNG)
+    $('btnExportPng').onclick = async () => {
+      const g = getActiveGoal();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 1920, 1080);
+      bgGrad.addColorStop(0, '#0f172a');
+      bgGrad.addColorStop(1, '#1e1b4b');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      const blob = await getPhotoFromDB(g.id);
+      if (blob) {
+        const img = new Image();
+        img.src = URL.createObjectURL(blob);
+        await new Promise(res => img.onload = res);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(100, 140, 800, 800, 32);
+        ctx.clip();
+
+        const scale = Math.max(800 / img.width, 800 / img.height);
+        const nw = img.width * scale;
+        const nh = img.height * scale;
+        const nx = 100 + (800 - nw) / 2;
+        const ny = 140 + (800 - nh) / 2;
+        ctx.drawImage(img, nx, ny, nw, nh);
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      const textX = blob ? 960 : 200;
+      const textWidth = blob ? 860 : 1520;
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 28px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('BIG GOAL & VISION', textX, 220);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 56px "Noto Sans JP", sans-serif';
+      wrapText(ctx, g.title || '無題の目標', textX, 300, textWidth, 76);
+
+      if (g.deadline) {
+        const targetDate = new Date(g.deadline + 'T23:59:59');
+        const diff = targetDate - new Date();
+        const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+        ctx.fillStyle = '#a5b4fc';
+        ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`達成期日: ${g.deadline}  (残り ${days} 日)`, textX, 580);
+      }
+
+      if (g.why) {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '28px "Noto Sans JP", sans-serif';
+        wrapText(ctx, `「${g.why}」`, textX, 680, textWidth, 46);
+      }
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('VisionGoal | selfup.net', textX, 930);
+
+      canvas.toBlob(b => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(b);
+        a.download = `vision_${g.title || 'goal'}.png`;
+        a.click();
+      });
+    };
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split('');
+      let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n];
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    // バックアップモーダル
+    $('btnBackup').onclick = () => $('backupModal').classList.remove('hidden');
+    $('btnCloseBackup').onclick = () => $('backupModal').classList.add('hidden');
+    $('btnExportJson').onclick = () => {
+      const dataStr = JSON.stringify(appData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `visiongoal_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    };
+    $('btnImportJsonTrigger').onclick = () => $('jsonFileInput').click();
+    $('jsonFileInput').onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && Array.isArray(parsed.goals)) {
+            appData = parsed;
+            saveAppData();
+            renderTabs();
+            renderActiveGoal();
+            $('backupModal').classList.add('hidden');
+            await showModalAlert('復元完了', 'データを正常に復元しました。');
+          } else {
+            throw new Error();
+          }
+        } catch (err) {
+          await showModalAlert('エラー', '不正なJSONファイルです。');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    async function init() {
+      await initDB();
+      loadAppData();
+      renderTabs();
+      await renderActiveGoal();
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
